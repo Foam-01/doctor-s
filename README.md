@@ -143,14 +143,4 @@ doctor-s/
 - [ ] Mobile Application
 - [ ] ระบบชำระเงินออนไลน์
 
-## 📄 License
 
-MIT License - ใช้งานได้อย่างอิสระ
-
-## 👥 ผู้พัฒนา
-
-พัฒนาโดยทีมนักพัฒนาที่ใส่ใจในวงการแพทย์ไทย
-
----
-
-🇹🇭 **Made with ❤️ for Thai Medical Community**
