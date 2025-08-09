@@ -569,6 +569,7 @@ const Login = () => {
               <Label htmlFor="email">อีเมล</Label>
               <Input
                 id="email"
+                name="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -580,6 +581,7 @@ const Login = () => {
               <Label htmlFor="password">รหัสผ่าน</Label>
               <Input
                 id="password"
+                name="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
