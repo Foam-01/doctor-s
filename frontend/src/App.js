@@ -807,17 +807,242 @@ const AdminRoute = ({ children }) => {
   return children;
 };
 
-// Shifts List Component (placeholder)
+// Shifts List Component
 const ShiftsList = () => {
+  const [shifts, setShifts] = useState([]);
+  const [filteredShifts, setFilteredShifts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [filters, setFilters] = useState({
+    position: '',
+    location: '',
+    date_from: '',
+    date_to: ''
+  });
+
+  const shiftPositions = [
+    { value: 'แพทย์ทั่วไป', label: 'แพทย์ทั่วไป' },
+    { value: 'แพทย์อายุรกรรม', label: 'แพทย์อายุรกรรม' },
+    { value: 'แพทย์ศัลยกรรม', label: 'แพทย์ศัลยกรรม' },
+    { value: 'แพทย์กุมารเวชศาสตร์', label: 'แพทย์กุมารเวชศาสตร์' },
+    { value: 'แพทย์สูติ-นรีเวชกรรม', label: 'แพทย์สูติ-นรีเวชกรรม' },
+    { value: 'แพทย์ฉุกเฉิน', label: 'แพทย์ฉุกเฉิน' },
+    { value: 'แพทย์วิสัญญีวิทยา', label: 'แพทย์วิสัญญีวิทยา' },
+    { value: 'แพทย์รังสีวิทยา', label: 'แพทย์รังสีวิทยา' },
+    { value: 'แพทย์พยาธิวิทยา', label: 'แพทย์พยาธิวิทยา' },
+    { value: 'แพทย์จิตเวชศาสตร์', label: 'แพทย์จิตเวชศาสตร์' }
+  ];
+
+  useEffect(() => {
+    fetchShifts();
+  }, []);
+
+  useEffect(() => {
+    applyFilters();
+  }, [shifts, filters]);
+
+  const fetchShifts = async () => {
+    try {
+      const response = await axios.get(`${API}/shifts`);
+      setShifts(response.data);
+    } catch (error) {
+      console.error('Error fetching shifts:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const applyFilters = () => {
+    let filtered = shifts;
+
+    if (filters.position) {
+      filtered = filtered.filter(shift => shift.position === filters.position);
+    }
+
+    if (filters.location) {
+      filtered = filtered.filter(shift => 
+        shift.location.toLowerCase().includes(filters.location.toLowerCase()) ||
+        shift.hospital_name.toLowerCase().includes(filters.location.toLowerCase())
+      );
+    }
+
+    if (filters.date_from) {
+      filtered = filtered.filter(shift => shift.shift_date >= filters.date_from);
+    }
+
+    if (filters.date_to) {
+      filtered = filtered.filter(shift => shift.shift_date <= filters.date_to);
+    }
+
+    setFilteredShifts(filtered);
+  };
+
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      position: '',
+      location: '',
+      date_from: '',
+      date_to: ''
+    });
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-3xl font-bold mb-8">เวรที่เปิดทั้งหมด</h1>
-      <Card>
-        <CardContent className="text-center py-12">
-          <Calendar className="mx-auto h-16 w-16 text-gray-300 mb-4" />
-          <p className="text-gray-500">ฟีเจอร์นี้กำลังพัฒนา</p>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">เวรที่เปิดทั้งหมด</h1>
+        <p className="text-gray-600">ค้นหาและสมัครเวรที่ต้องการ</p>
+      </div>
+
+      {/* Filters */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-lg">ตัวกรองการค้นหา</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <Label htmlFor="position">ตำแหน่ง</Label>
+              <Select value={filters.position} onValueChange={(value) => handleFilterChange('position', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="เลือกตำแหน่ง" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">ทั้งหมด</SelectItem>
+                  {shiftPositions.map((position) => (
+                    <SelectItem key={position.value} value={position.value}>
+                      {position.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="location">สถานที่</Label>
+              <Input
+                id="location"
+                placeholder="ค้นหาโรงพยาบาล/จังหวัด"
+                value={filters.location}
+                onChange={(e) => handleFilterChange('location', e.target.value)}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="date_from">วันที่เริ่มต้น</Label>
+              <Input
+                id="date_from"
+                type="date"
+                value={filters.date_from}
+                onChange={(e) => handleFilterChange('date_from', e.target.value)}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="date_to">วันที่สิ้นสุด</Label>
+              <Input
+                id="date_to"
+                type="date"
+                value={filters.date_to}
+                onChange={(e) => handleFilterChange('date_to', e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center mt-4">
+            <Button variant="outline" onClick={clearFilters}>
+              ล้างตัวกรอง
+            </Button>
+            <span className="text-sm text-gray-500">
+              พบ {filteredShifts.length} เวร
+            </span>
+          </div>
         </CardContent>
       </Card>
+
+      {/* Shifts List */}
+      <div className="space-y-4">
+        {isLoading ? (
+          <div className="text-center py-8">กำลังโหลด...</div>
+        ) : filteredShifts.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-12">
+              <Calendar className="mx-auto h-16 w-16 text-gray-300 mb-4" />
+              <p className="text-gray-500 mb-2">ไม่พบเวรที่ตรงกับเงื่อนไขการค้นหา</p>
+              <p className="text-sm text-gray-400">ลองปรับเปลี่ยนตัวกรองการค้นหา</p>
+            </CardContent>
+          </Card>
+        ) : (
+          filteredShifts.map((shift) => (
+            <Card key={shift.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-1">
+                      {shift.position}
+                    </h3>
+                    <p className="text-gray-600">โดย {shift.doctor_name}</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-green-600">
+                      {shift.compensation.toLocaleString()} บาท
+                    </div>
+                    <Badge className="bg-green-100 text-green-800">เปิดรับสมัคร</Badge>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                  <div className="flex items-center text-gray-600">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    {new Date(shift.shift_date).toLocaleDateString('th-TH', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </div>
+                  <div className="flex items-center text-gray-600">
+                    <Clock className="h-4 w-4 mr-2" />
+                    {shift.start_time} - {shift.end_time}
+                  </div>
+                  <div className="flex items-center text-gray-600">
+                    <MapPin className="h-4 w-4 mr-2" />
+                    {shift.hospital_name}
+                  </div>
+                  <div className="flex items-center text-gray-600">
+                    <MapPin className="h-4 w-4 mr-2" />
+                    {shift.location}
+                  </div>
+                </div>
+
+                {shift.description && (
+                  <div className="mb-4">
+                    <h4 className="font-medium text-gray-900 mb-2">รายละเอียดงาน</h4>
+                    <p className="text-gray-600 text-sm">{shift.description}</p>
+                  </div>
+                )}
+
+                {shift.requirements && (
+                  <div className="mb-4">
+                    <h4 className="font-medium text-gray-900 mb-2">ข้อกำหนด</h4>
+                    <p className="text-gray-600 text-sm">{shift.requirements}</p>
+                  </div>
+                )}
+
+                <div className="flex justify-between items-center">
+                  <div className="text-sm text-gray-500">
+                    ประกาศเมื่อ {new Date(shift.created_at).toLocaleDateString('th-TH')}
+                  </div>
+                  <Button>
+                    สนใจรับเวร
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
     </div>
   );
 };
