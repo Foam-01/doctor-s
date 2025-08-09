@@ -11,6 +11,7 @@ class ThaiMedicalPlatformTester:
         self.admin_token = None
         self.doctor_token = None
         self.doctor_user_id = None
+        self.shift_id = None
         self.tests_run = 0
         self.tests_passed = 0
 
