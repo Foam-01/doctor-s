@@ -912,7 +912,7 @@ const ShiftsList = () => {
                   <SelectValue placeholder="เลือกตำแหน่ง" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">ทั้งหมด</SelectItem>
+                  <SelectItem value="all">ทั้งหมด</SelectItem>
                   {shiftPositions.map((position) => (
                     <SelectItem key={position.value} value={position.value}>
                       {position.label}
