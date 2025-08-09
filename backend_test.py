@@ -324,6 +324,9 @@ def main():
         ("Get Pending Users (Admin)", tester.test_get_pending_users_admin),
         ("Approve User (Admin)", tester.test_approve_user_admin),
         ("Doctor Access After Approval", tester.test_doctor_access_after_approval),
+        ("Create Shift", tester.test_create_shift),
+        ("Get All Shifts", tester.test_get_all_shifts),
+        ("Get Shifts with Filters", tester.test_get_shifts_with_filters),
         ("Invalid Login", tester.test_invalid_login),
         ("Duplicate Registration", tester.test_duplicate_registration),
     ]
