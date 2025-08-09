@@ -11,6 +11,7 @@ class ThaiMedicalPlatformTester:
         self.admin_token = None
         self.doctor_token = None
         self.doctor_user_id = None
+        self.shift_id = None
         self.tests_run = 0
         self.tests_passed = 0
 
@@ -202,6 +203,73 @@ class ThaiMedicalPlatformTester:
         )
         return success
 
+    def test_create_shift(self):
+        """Test creating a new shift"""
+        if not self.doctor_token:
+            print("❌ No doctor token available")
+            return False
+            
+        headers = {'Authorization': f'Bearer {self.doctor_token}'}
+        shift_data = {
+            "position": "แพทย์ทั่วไป",
+            "shift_date": "2025-08-15",
+            "start_time": "08:00",
+            "end_time": "16:00",
+            "hospital_name": "โรงพยาบาลทดสอบ",
+            "location": "กรุงเทพฯ",
+            "compensation": 3000.0,
+            "description": "เวรทดสอบระบบ",
+            "requirements": "ต้องมีประสบการณ์",
+            "contact_method": "แชทในแพลตฟอร์ม"
+        }
+        
+        success, response = self.run_test(
+            "Create Shift",
+            "POST",
+            "shifts",
+            200,
+            data=shift_data,
+            headers=headers
+        )
+        
+        if success and 'id' in response:
+            self.shift_id = response['id']
+            print(f"   Shift ID: {self.shift_id}")
+            return True
+        return False
+
+    def test_get_all_shifts(self):
+        """Test getting all shifts"""
+        if not self.doctor_token:
+            print("❌ No doctor token available")
+            return False
+            
+        headers = {'Authorization': f'Bearer {self.doctor_token}'}
+        success, response = self.run_test(
+            "Get All Shifts",
+            "GET",
+            "shifts",
+            200,
+            headers=headers
+        )
+        return success
+
+    def test_get_shifts_with_filters(self):
+        """Test getting shifts with filters"""
+        if not self.doctor_token:
+            print("❌ No doctor token available")
+            return False
+            
+        headers = {'Authorization': f'Bearer {self.doctor_token}'}
+        success, response = self.run_test(
+            "Get Shifts with Position Filter",
+            "GET",
+            "shifts?position=แพทย์ทั่วไป",
+            200,
+            headers=headers
+        )
+        return success
+
     def test_invalid_login(self):
         """Test login with invalid credentials"""
         success, response = self.run_test(
@@ -256,6 +324,9 @@ def main():
         ("Get Pending Users (Admin)", tester.test_get_pending_users_admin),
         ("Approve User (Admin)", tester.test_approve_user_admin),
         ("Doctor Access After Approval", tester.test_doctor_access_after_approval),
+        ("Create Shift", tester.test_create_shift),
+        ("Get All Shifts", tester.test_get_all_shifts),
+        ("Get Shifts with Filters", tester.test_get_shifts_with_filters),
         ("Invalid Login", tester.test_invalid_login),
         ("Duplicate Registration", tester.test_duplicate_registration),
     ]
