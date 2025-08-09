@@ -1047,15 +1047,273 @@ const ShiftsList = () => {
   );
 };
 
-// Post Shift Component (placeholder)
+// Post Shift Component
 const PostShift = () => {
+  const [formData, setFormData] = useState({
+    position: '',
+    shift_date: '',
+    start_time: '',
+    end_time: '',
+    hospital_name: '',
+    location: '',
+    compensation: '',
+    description: '',
+    requirements: '',
+    contact_method: 'แชทในแพลตฟอร์ม'
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  const navigate = useNavigate();
+
+  const shiftPositions = [
+    { value: 'แพทย์ทั่วไป', label: 'แพทย์ทั่วไป' },
+    { value: 'แพทย์อายุรกรรม', label: 'แพทย์อายุรกรรม' },
+    { value: 'แพทย์ศัลยกรรม', label: 'แพทย์ศัลยกรรม' },
+    { value: 'แพทย์กุมารเวชศาสตร์', label: 'แพทย์กุมารเวชศาสตร์' },
+    { value: 'แพทย์สูติ-นรีเวชกรรม', label: 'แพทย์สูติ-นรีเวชกรรม' },
+    { value: 'แพทย์ฉุกเฉิน', label: 'แพทย์ฉุกเฉิน' },
+    { value: 'แพทย์วิสัญญีวิทยา', label: 'แพทย์วิสัญญีวิทยา' },
+    { value: 'แพทย์รังสีวิทยา', label: 'แพทย์รังสีวิทยา' },
+    { value: 'แพทย์พยาธิวิทยา', label: 'แพทย์พยาธิวิทยา' },
+    { value: 'แพทย์จิตเวชศาสตร์', label: 'แพทย์จิตเวชศาสตร์' }
+  ];
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSelectChange = (name, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    try {
+      // Convert compensation to number
+      const submitData = {
+        ...formData,
+        compensation: parseFloat(formData.compensation)
+      };
+
+      await axios.post(`${API}/shifts`, submitData);
+      setSuccess(true);
+    } catch (error) {
+      setError(error.response?.data?.detail || 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Card className="text-center">
+          <CardHeader>
+            <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
+            <CardTitle>ประกาศเวรสำเร็จ!</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <CardDescription>
+              ประกาศหาคนรับเวรของคุณได้รับการเผยแพร่แล้ว
+              <br />
+              แพทย์ท่านอื่นสามารถดูและสมัครรับเวรได้
+            </CardDescription>
+            <div className="flex gap-4 justify-center">
+              <Button onClick={() => navigate('/shifts')}>
+                ดูเวรทั้งหมด
+              </Button>
+              <Button variant="outline" onClick={() => navigate('/dashboard')}>
+                กลับสู่แดชบอร์ด
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-3xl font-bold mb-8">ประกาศหาคนรับเวร</h1>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">ประกาศหาคนรับเวร</h1>
+        <p className="text-gray-600">กรอกรายละเอียดเวรที่ต้องการหาคนช่วย</p>
+      </div>
+
       <Card>
-        <CardContent className="text-center py-12">
-          <Calendar className="mx-auto h-16 w-16 text-gray-300 mb-4" />
-          <p className="text-gray-500">ฟีเจอร์นี้กำลังพัฒนา</p>
+        <CardHeader>
+          <CardTitle>รายละเอียดเวร</CardTitle>
+          <CardDescription>
+            กรอกข้อมูลให้ครบถ้วนเพื่อให้แพทย์ท่านอื่นสามารถตัดสินใจได้
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {error && (
+              <Alert className="border-red-200 bg-red-50">
+                <XCircle className="h-4 w-4 text-red-600" />
+                <AlertDescription className="text-red-600">{error}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* Position */}
+            <div>
+              <Label htmlFor="position">ตำแหน่งที่ต้องการ *</Label>
+              <Select value={formData.position} onValueChange={(value) => handleSelectChange('position', value)} required>
+                <SelectTrigger>
+                  <SelectValue placeholder="เลือกตำแหน่งแพทย์" />
+                </SelectTrigger>
+                <SelectContent>
+                  {shiftPositions.map((position) => (
+                    <SelectItem key={position.value} value={position.value}>
+                      {position.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Date and Time */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="shift_date">วันที่ *</Label>
+                <Input
+                  id="shift_date"
+                  name="shift_date"
+                  type="date"
+                  value={formData.shift_date}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="start_time">เวลาเริ่ม *</Label>
+                <Input
+                  id="start_time"
+                  name="start_time"
+                  type="time"
+                  value={formData.start_time}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="end_time">เวลาสิ้นสุด *</Label>
+                <Input
+                  id="end_time"
+                  name="end_time"
+                  type="time"
+                  value={formData.end_time}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Hospital and Location */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="hospital_name">ชื่อโรงพยาบาล/คลินิก *</Label>
+                <Input
+                  id="hospital_name"
+                  name="hospital_name"
+                  value={formData.hospital_name}
+                  onChange={handleInputChange}
+                  placeholder="เช่น โรงพยาบาลศิริราช"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="location">สถานที่ *</Label>
+                <Input
+                  id="location"
+                  name="location"
+                  value={formData.location}
+                  onChange={handleInputChange}
+                  placeholder="เช่น กรุงเทพฯ, เชียงใหม่"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Compensation */}
+            <div>
+              <Label htmlFor="compensation">ค่าตอบแทน (บาท) *</Label>
+              <Input
+                id="compensation"
+                name="compensation"
+                type="number"
+                value={formData.compensation}
+                onChange={handleInputChange}
+                placeholder="เช่น 3000"
+                required
+                min="0"
+                step="100"
+              />
+            </div>
+
+            {/* Description */}
+            <div>
+              <Label htmlFor="description">รายละเอียดงาน</Label>
+              <Textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                placeholder="อธิบายลักษณะงาน หน้าที่ที่ต้องทำ หรือข้อมูลเพิ่มเติม"
+                rows={4}
+              />
+            </div>
+
+            {/* Requirements */}
+            <div>
+              <Label htmlFor="requirements">ข้อกำหนดพิเศษ</Label>
+              <Textarea
+                id="requirements"
+                name="requirements"
+                value={formData.requirements}
+                onChange={handleInputChange}
+                placeholder="เช่น ต้องมีประสบการณ์ในแผนก ICU, ต้องมีใบอนุญาตเฉพาะทาง"
+                rows={3}
+              />
+            </div>
+
+            {/* Contact Method */}
+            <div>
+              <Label htmlFor="contact_method">วิธีการติดต่อ</Label>
+              <Select value={formData.contact_method} onValueChange={(value) => handleSelectChange('contact_method', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="เลือกวิธีการติดต่อ" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="แชทในแพลตฟอร์ม">แชทในแพลตฟอร์ม</SelectItem>
+                  <SelectItem value="โทรศัพท์">โทรศัพท์</SelectItem>
+                  <SelectItem value="อีเมล">อีเมล</SelectItem>
+                  <SelectItem value="LINE">LINE</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex gap-4 pt-6">
+              <Button type="submit" className="flex-1" disabled={isLoading}>
+                {isLoading ? 'กำลังประกาศ...' : 'ประกาศเวร'}
+              </Button>
+              <Button type="button" variant="outline" onClick={() => navigate('/dashboard')}>
+                ยกเลิก
+              </Button>
+            </div>
+          </form>
         </CardContent>
       </Card>
     </div>
