@@ -837,15 +837,169 @@ const PostShift = () => {
   );
 };
 
-// Admin Dashboard Component (placeholder)
+// Admin Dashboard Component
 const AdminDashboard = () => {
+  const [pendingUsers, setPendingUsers] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetchPendingUsers();
+  }, []);
+
+  const fetchPendingUsers = async () => {
+    try {
+      const response = await axios.get(`${API}/admin/pending-users`);
+      setPendingUsers(response.data);
+    } catch (error) {
+      setError('ไม่สามารถโหลดรายการผู้ใช้ที่รอการอนุมัติได้');
+      console.error('Error fetching pending users:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const approveUser = async (userId) => {
+    try {
+      await axios.post(`${API}/admin/approve-user/${userId}`);
+      // Remove approved user from the list
+      setPendingUsers(pendingUsers.filter(user => user.id !== userId));
+    } catch (error) {
+      setError('ไม่สามารถอนุมัติผู้ใช้ได้');
+      console.error('Error approving user:', error);
+    }
+  };
+
+  const rejectUser = async (userId) => {
+    try {
+      await axios.post(`${API}/admin/reject-user/${userId}`);
+      // Remove rejected user from the list
+      setPendingUsers(pendingUsers.filter(user => user.id !== userId));
+    } catch (error) {
+      setError('ไม่สามารถปฏิเสธผู้ใช้ได้');
+      console.error('Error rejecting user:', error);
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-3xl font-bold mb-8">จัดการระบบ</h1>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">จัดการระบบ</h1>
+        <p className="text-gray-600">ตรวจสอบและอนุมัติการสมัครสมาชิกของแพทย์</p>
+      </div>
+
+      {error && (
+        <Alert className="border-red-200 bg-red-50 mb-6">
+          <XCircle className="h-4 w-4 text-red-600" />
+          <AlertDescription className="text-red-600">{error}</AlertDescription>
+        </Alert>
+      )}
+
       <Card>
-        <CardContent className="text-center py-12">
-          <User className="mx-auto h-16 w-16 text-gray-300 mb-4" />
-          <p className="text-gray-500">ฟีเจอร์นี้กำลังพัฒนา</p>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <User className="h-5 w-5 mr-2" />
+            แพทย์ที่รอการอนุมัติ
+          </CardTitle>
+          <CardDescription>
+            รายการแพทย์ที่สมัครสมาชิกและรอการตรวจสอบใบอนุญาต
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-pulse">กำลังโหลด...</div>
+            </div>
+          ) : pendingUsers.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <CheckCircle className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+              <p>ไม่มีแพทย์ที่รอการอนุมัติ</p>
+              <p className="text-sm">แพทย์ทุกคนได้รับการอนุมัติแล้ว</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {pendingUsers.map((user) => (
+                <div key={user.id} className="border rounded-lg p-6 bg-gray-50">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        {user.first_name} {user.last_name}
+                      </h3>
+                      <p className="text-gray-600">{user.email}</p>
+                    </div>
+                    <Badge className="bg-yellow-100 text-yellow-800">
+                      รออนุมัติ
+                    </Badge>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">
+                        หมายเลขโทรศัพท์
+                      </Label>
+                      <p className="text-gray-900">{user.phone_number}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">
+                        เลขที่ใบอนุญาต
+                      </Label>
+                      <p className="text-gray-900">{user.medical_license_number}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">
+                        วันที่สมัคร
+                      </Label>
+                      <p className="text-gray-900">
+                        {new Date(user.created_at).toLocaleDateString('th-TH')}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">
+                        สถานะบัญชี
+                      </Label>
+                      <p className="text-gray-900">{user.approval_status === 'pending' ? 'รออนุมัติ' : user.approval_status}</p>
+                    </div>
+                  </div>
+
+                  {user.license_image_path && (
+                    <div className="mb-6">
+                      <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                        ภาพใบอนุญาตประกอบวิชาชีพเวชกรรม
+                      </Label>
+                      <div className="border rounded-lg p-2 bg-white inline-block">
+                        <img
+                          src={`${BACKEND_URL}${user.license_image_path}`}
+                          alt="ใบอนุญาตประกอบวิชาชีพเวชกรรม"
+                          className="max-w-md max-h-96 object-contain rounded"
+                          onError={(e) => {
+                            e.target.alt = 'ไม่สามารถโหลดภาพได้';
+                            e.target.className = 'w-32 h-32 bg-gray-200 rounded flex items-center justify-center text-gray-500 text-sm';
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex space-x-3">
+                    <Button
+                      onClick={() => approveUser(user.id)}
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      อนุมัติ
+                    </Button>
+                    <Button
+                      onClick={() => rejectUser(user.id)}
+                      variant="destructive"
+                    >
+                      <XCircle className="h-4 w-4 mr-2" />
+                      ปฏิเสธ
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
